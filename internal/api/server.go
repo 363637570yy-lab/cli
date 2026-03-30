@@ -318,6 +318,8 @@ func NewServer(cfg *config.Config, authManager *auth.Manager, accessManager *sdk
 // It defines the endpoints and associates them with their respective handlers.
 func (s *Server) setupRoutes() {
 	s.engine.GET("/management.html", s.serveManagementControlPanel)
+	// 动态代理管理页（独立页面，JS 层自行弹出认证，无需 server 层 middleware）
+	s.engine.GET("/dynamic-proxy", managementHandlers.ServeDynamicProxyPage)
 	openaiHandlers := openai.NewOpenAIAPIHandler(s.handlers)
 	geminiHandlers := gemini.NewGeminiAPIHandler(s.handlers)
 	geminiCLIHandlers := gemini.NewGeminiCLIAPIHandler(s.handlers)
@@ -522,6 +524,13 @@ func (s *Server) registerManagementRoutes() {
 		mgmt.PUT("/proxy-url", s.mgmt.PutProxyURL)
 		mgmt.PATCH("/proxy-url", s.mgmt.PutProxyURL)
 		mgmt.DELETE("/proxy-url", s.mgmt.DeleteProxyURL)
+
+		// 动态代理配置 API
+		mgmt.GET("/dynamic-proxy", s.mgmt.GetDynamicProxy)
+		mgmt.PUT("/dynamic-proxy", s.mgmt.PutDynamicProxy)
+		mgmt.PATCH("/dynamic-proxy", s.mgmt.PutDynamicProxy)
+		mgmt.DELETE("/dynamic-proxy", s.mgmt.DeleteDynamicProxy)
+		mgmt.POST("/dynamic-proxy/test", s.mgmt.TestDynamicProxy)
 
 		mgmt.POST("/api-call", s.mgmt.APICall)
 
