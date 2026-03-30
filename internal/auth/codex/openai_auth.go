@@ -20,10 +20,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// codexOAuthUserAgent 返回与真实 macOS Codex CLI 一致的 OAuth 请求 UA，
-// 硬编码为 macOS 格式，避免服务器在 Linux 上运行时泄露平台信息触发风控。
+// codexOAuthUserAgent 返回与真实 Windows Codex CLI 一致的 OAuth 请求 UA，
+// 与客户端平台（Windows）保持一致，避免刷新请求与正常请求平台矛盾。
 func codexOAuthUserAgent() string {
-	return "codex_cli_rs/0.116.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464"
+	return "codex_cli_rs/0.116.0 (Windows 10.0.22631; x86_64)"
 }
 
 // OAuth configuration constants for OpenAI Codex

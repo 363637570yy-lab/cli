@@ -34,14 +34,13 @@ const (
 	codexCompletedDrainGracePeriod = 100 * time.Millisecond
 )
 
-// buildCodexUserAgent 返回与真实 macOS Codex CLI 一致的 User-Agent 字符串。
-// 硬编码为 macOS 格式，避免服务器运行在 Linux 时因平台检测导致 UA 携带 Linux 标识，
-// 被 OpenAI 风控识别为非官方服务端代理客户端。
-// 真实 Codex CLI 用户绝大多数在 macOS 上运行，使用该 UA 可最大程度降低风控触发概率。
+// buildCodexUserAgent 返回与真实 Windows Codex CLI 一致的 User-Agent 字符串。
+// 硬编码为 Windows 格式，与实际客户端（Windows Codex CLI）保持一致，
+// 避免 token 刷新请求与客户端请求的平台信息矛盾，触发 OpenAI 风控。
 func buildCodexUserAgent() string {
-	// 固定对齐真实 macOS Codex CLI 的 UA 格式
-	// codex_cli_rs/0.116.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464
-	return "codex_cli_rs/0.116.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464"
+	// 对齐真实 Windows Codex CLI：
+	// codex_cli_rs/0.116.0 (Windows 10.0.22631; x86_64)
+	return "codex_cli_rs/0.116.0 (Windows 10.0.22631; x86_64)"
 }
 
 var codexUserAgent = buildCodexUserAgent()
