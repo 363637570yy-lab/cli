@@ -77,8 +77,15 @@ func createReverseProxy(upstreamURL string, secretSource SecretSource) (*httputi
 		req.Header.Del("X-Api-Key")
 		req.Header.Del("X-Goog-Api-Key")
 
-		// Remove proxy, client identity, and browser fingerprint headers
+		// Remove proxy tracing headers and client identity headers only.
+		// Browser fingerprint headers (sec-ch-ua, Sec-Fetch-*) are preserved
+		// and supplemented below to avoid fingerprint mismatch with Amp upstream.
 		misc.ScrubProxyAndFingerprintHeaders(req)
+
+		// Inject randomized Chrome browser fingerprint.
+		// Amp upstream validates browser-like headers; Go's default UA would be rejected.
+		// This mirrors codex-console's OpenAIHTTPClient._build_default_headers() strategy.
+		misc.InjectBrowserFingerprint(req, misc.NewChromeFingerprint())
 
 		// Remove query-based credentials if they match the authenticated client API key.
 		// This prevents leaking client auth material to the Amp upstream while avoiding

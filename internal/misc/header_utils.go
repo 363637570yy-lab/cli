@@ -49,12 +49,11 @@ func GeminiCLIUserAgent(model string) string {
 	return fmt.Sprintf("GeminiCLI/%s/%s (%s; %s)", GeminiCLIVersion, model, geminiCLIOS(), geminiCLIArch())
 }
 
-// ScrubProxyAndFingerprintHeaders removes all headers that could reveal
-// proxy infrastructure, client identity, or browser fingerprints from an
-// outgoing request. This ensures requests to upstream services look like they
-// originate directly from a native client rather than a third-party client
-// behind a reverse proxy.
-func ScrubProxyAndFingerprintHeaders(req *http.Request) {
+// ScrubProxyHeaders removes proxy infrastructure and client identity headers
+// from an outgoing request. This is a subset of the former ScrubProxyAndFingerprintHeaders
+// and does NOT remove browser fingerprint headers (sec-ch-ua, Sec-Fetch-*, etc.).
+// Use this when you intend to inject a fresh browser fingerprint afterwards.
+func ScrubProxyHeaders(req *http.Request) {
 	if req == nil {
 		return
 	}
@@ -78,10 +77,16 @@ func ScrubProxyAndFingerprintHeaders(req *http.Request) {
 	req.Header.Del("X-Stainless-Runtime-Version")
 	req.Header.Del("Http-Referer")
 	req.Header.Del("Referer")
+}
+
+// ScrubBrowserFingerprintHeaders removes Chromium/browser fingerprint headers.
+// Call this when the upstream expects a non-browser client (e.g. pure API clients).
+func ScrubBrowserFingerprintHeaders(req *http.Request) {
+	if req == nil {
+		return
+	}
 
 	// --- Browser / Chromium fingerprint headers ---
-	// These are sent by Electron-based clients (e.g. CherryStudio) using the
-	// Fetch API, but NOT by Node.js https module (which Antigravity uses).
 	req.Header.Del("Sec-Ch-Ua")
 	req.Header.Del("Sec-Ch-Ua-Mobile")
 	req.Header.Del("Sec-Ch-Ua-Platform")
@@ -95,6 +100,21 @@ func ScrubProxyAndFingerprintHeaders(req *http.Request) {
 	// Electron-based clients may add "zstd" which is a fingerprint mismatch.
 	req.Header.Del("Accept-Encoding")
 }
+
+// ScrubProxyAndFingerprintHeaders removes all headers that could reveal
+// proxy infrastructure, client identity, or browser fingerprints from an
+// outgoing request. This ensures requests to upstream services look like they
+// originate directly from a native client rather than a third-party client
+// behind a reverse proxy.
+//
+// Deprecated: Prefer ScrubProxyHeaders + InjectBrowserFingerprint for endpoints
+// that require browser-like headers (OpenAI, Anthropic Amp, etc.).
+// Use ScrubProxyHeaders + ScrubBrowserFingerprintHeaders for pure API endpoints.
+func ScrubProxyAndFingerprintHeaders(req *http.Request) {
+	ScrubProxyHeaders(req)
+	ScrubBrowserFingerprintHeaders(req)
+}
+
 
 // EnsureHeader ensures that a header exists in the target header map by checking
 // multiple sources in order of priority: source headers, existing target headers,
