@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 
@@ -19,6 +20,35 @@ import (
 	"github.com/router-for-me/CLIProxyAPI/v6/internal/util"
 	log "github.com/sirupsen/logrus"
 )
+
+// codexOAuthUserAgent 返回与本机平台匹配的 OAuth 请求 UA，
+// 对齐 codex_cli_rs 客户端在 token 交换/刷新时发送的值。
+func codexOAuthUserAgent() string {
+	version := "0.116.0"
+	terminalVer := "464"
+	osName := runtime.GOOS
+	archName := runtime.GOARCH
+	var osDisplay, osVer string
+	switch osName {
+	case "darwin":
+		osDisplay = "Mac OS"
+		osVer = "26.0.1"
+	case "linux":
+		osDisplay = "Linux"
+		osVer = "6.1.0"
+	case "windows":
+		osDisplay = "Windows"
+		osVer = "10.0.22631"
+	default:
+		osDisplay = osName
+		osVer = "1.0.0"
+	}
+	if archName == "amd64" {
+		archName = "x86_64"
+	}
+	return fmt.Sprintf("codex_cli_rs/%s (%s %s; %s) Apple_Terminal/%s",
+		version, osDisplay, osVer, archName, terminalVer)
+}
 
 // OAuth configuration constants for OpenAI Codex
 const (
@@ -129,6 +159,7 @@ func (o *CodexAuth) ExchangeCodeForTokensWithRedirect(ctx context.Context, code,
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", codexOAuthUserAgent())
 
 	resp, err := o.httpClient.Do(req)
 	if err != nil {
@@ -215,6 +246,7 @@ func (o *CodexAuth) RefreshTokens(ctx context.Context, refreshToken string) (*Co
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", codexOAuthUserAgent())
 
 	resp, err := o.httpClient.Do(req)
 	if err != nil {
