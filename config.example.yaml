@@ -102,6 +102,40 @@ usage-statistics-persist-interval-seconds: 30
 # Per-entry proxy-url also supports "direct" or "none" to bypass both the global proxy-url and environment proxies explicitly.
 proxy-url: ""
 
+# Dynamic proxy configuration (optional)
+# When enabled, all outbound executor requests are routed through a dynamically fetched proxy IP.
+# The proxy URL is obtained from an external HTTP API and cached with TTL-based expiry.
+# Priority: dynamic-proxy (highest) > auth.proxy-url (per-credential) > proxy-url (global static)
+#
+# Typical provider API URL formats:
+#   - Plain text:  https://api.example.com/get-proxy?time=10
+#     Response body: "http://user:pass@1.2.3.4:8080"
+#   - JSON:        https://api.example.com/proxy?time=5
+#     Response:    {"data": {"proxy": "http://user:pass@1.2.3.4:8080"}}
+#     Set result-field: "data.proxy"
+#
+# dynamic-proxy:
+#   enable: false
+#   # API endpoint that returns the proxy URL (plain text or JSON)
+#   api-url: "https://api.example.com/get-proxy?time=10"
+#   # Optional API key for authentication
+#   api-key: ""
+#   # HTTP header name for the API key. Default: "X-API-Key"
+#   api-key-header: "X-API-Key"
+#   # JSON field path to extract proxy URL from response (dot-separated).
+#   # Example: "data.proxy" for {"data": {"proxy": "http://..."}}
+#   # Leave empty to use response body as-is.
+#   result-field: ""
+#   # Proxy cache TTL in seconds. 0 = auto-infer from "time=N" param in api-url (N minutes).
+#   # Falls back to 540 seconds (9 minutes) when not configured.
+#   ttl-seconds: 0
+#   # Number of requests each proxy IP may serve before fetching a new one (count-driven rotation).
+#   # Mirrors codex-console's quantity-driven IP rotation strategy.
+#   # Set to 0 to use TTL-only rotation (no request count limit per IP).
+#   # Example: 50 means every 50 requests triggers a new proxy IP fetch.
+#   requests-per-ip: 0
+
+
 # When true, unprefixed model requests only use credentials without a prefix (except when prefix == model name).
 force-model-prefix: false
 

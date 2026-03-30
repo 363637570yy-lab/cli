@@ -43,6 +43,16 @@ func newProxyAwareHTTPClient(ctx context.Context, cfg *config.Config, auth *clip
 		}
 	}
 
+	// Priority 0: 动态代理（全局，优先级最高）
+	// 当 dynamic-proxy.enable=true 且 API 可用时，所有凭证/executor 的请求均走动态代理。
+	// 获取失败时降级到下一级。
+	if cfg != nil && cfg.DynamicProxy.Enable {
+		if dynTransport := getDynamicProxyTransport(cfg); dynTransport != nil {
+			return newProxyHTTPClient(dynTransport, timeout)
+		}
+		log.Warn("dynamic proxy: failed to obtain transport, falling back to static proxy")
+	}
+
 	// Priority 1: Use auth.ProxyURL if configured
 	var proxyURL string
 	if auth != nil {
