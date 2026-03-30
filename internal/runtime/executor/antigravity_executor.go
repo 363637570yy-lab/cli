@@ -17,6 +17,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -44,11 +45,30 @@ const (
 	antigravityGeneratePath        = "/v1internal:generateContent"
 	antigravityClientID            = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com"
 	antigravityClientSecret        = "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"
-	defaultAntigravityAgent        = "antigravity/1.19.6 darwin/arm64"
 	antigravityAuthType            = "antigravity"
 	refreshSkew                    = 3000 * time.Second
-	// systemInstruction              = "You are Antigravity, a powerful agentic AI coding assistant designed by the Google Deepmind team working on Advanced Agentic Coding.You are pair programming with a USER to solve their coding task. The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.**Absolute paths only****Proactiveness**"
 )
+
+// buildAntigravityUserAgent 构建与运行平台匹配的 User-Agent
+// 格式: antigravity/{version} {os}/{arch}
+// 对齐实际 Antigravity 客户端格式，避免平台与 IP 信息不符被风控识别
+func buildAntigravityUserAgent() string {
+	version := "1.19.6"
+	// 将 Go runtime OS 名称转换为 Antigravity 约定
+	osName := runtime.GOOS
+	if osName == "windows" {
+		osName = "win32"
+	}
+	// 将 Go runtime arch 转换为 Antigravity 约定
+	archName := runtime.GOARCH
+	if archName == "amd64" {
+		archName = "x64"
+	}
+	return "antigravity/" + version + " " + osName + "/" + archName
+}
+
+// defaultAntigravityAgent 在包初始化时根据实际运行平台动态生成
+var defaultAntigravityAgent = buildAntigravityUserAgent()
 
 var (
 	randSource      = rand.New(rand.NewSource(time.Now().UnixNano()))
