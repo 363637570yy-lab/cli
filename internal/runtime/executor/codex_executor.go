@@ -36,8 +36,9 @@ const (
 )
 
 // buildCodexUserAgent 生成与实际运行平台匹配的 Codex CLI User-Agent。
-// 格式: codex_cli_rs/{version} ({OS} {osver}; {arch}) Apple_Terminal/{terminal}
-// 对齐真实 codex_cli_rs 格式，避免 Mac OS arm64 在 Linux 服务器上被 OpenAI 识别。
+// macOS 格式: codex_cli_rs/{version} (Mac OS {osver}; {arch}) Apple_Terminal/{terminal}
+// 其他平台:    codex_cli_rs/{version} ({OS} {osver}; {arch})
+// 避免 Linux/Windows 服务器携带 Apple_Terminal 造成客户端类型矛盾，触发 OpenAI 风控。
 func buildCodexUserAgent() string {
 	version := "0.116.0"
 	terminalVer := "464"
@@ -48,7 +49,7 @@ func buildCodexUserAgent() string {
 	switch osName {
 	case "darwin":
 		osDisplay = "Mac OS"
-		osVer = "26.0.1" // 保留 macOS 本机版本
+		osVer = "26.0.1"
 	case "linux":
 		osDisplay = "Linux"
 		osVer = "6.1.0"
@@ -62,8 +63,14 @@ func buildCodexUserAgent() string {
 	if archName == "amd64" {
 		archName = "x86_64"
 	}
-	return fmt.Sprintf("codex_cli_rs/%s (%s %s; %s) Apple_Terminal/%s",
-		version, osDisplay, osVer, archName, terminalVer)
+	// Apple_Terminal 仅属于 macOS 终端环境，非 macOS 平台去掉该后缀
+	// 避免 Linux 服务器发出带 Apple_Terminal 的请求头，被 OpenAI 识别为客户端伪造
+	if osName == "darwin" {
+		return fmt.Sprintf("codex_cli_rs/%s (%s %s; %s) Apple_Terminal/%s",
+			version, osDisplay, osVer, archName, terminalVer)
+	}
+	return fmt.Sprintf("codex_cli_rs/%s (%s %s; %s)",
+		version, osDisplay, osVer, archName)
 }
 
 var codexUserAgent = buildCodexUserAgent()
