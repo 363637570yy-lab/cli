@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
 
@@ -28,12 +29,44 @@ import (
 )
 
 const (
-	codexUserAgent = "codex_cli_rs/0.116.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464"
 	codexOriginator = "codex_cli_rs"
 	// Give non-stream /responses a short chance to reach EOF so keep-alive
 	// connections can be reused without reintroducing long tail latency.
 	codexCompletedDrainGracePeriod = 100 * time.Millisecond
 )
+
+// buildCodexUserAgent 生成与实际运行平台匹配的 Codex CLI User-Agent。
+// 格式: codex_cli_rs/{version} ({OS} {osver}; {arch}) Apple_Terminal/{terminal}
+// 对齐真实 codex_cli_rs 格式，避免 Mac OS arm64 在 Linux 服务器上被 OpenAI 识别。
+func buildCodexUserAgent() string {
+	version := "0.116.0"
+	terminalVer := "464"
+
+	osName := runtime.GOOS
+	archName := runtime.GOARCH
+	var osDisplay, osVer string
+	switch osName {
+	case "darwin":
+		osDisplay = "Mac OS"
+		osVer = "26.0.1" // 保留 macOS 本机版本
+	case "linux":
+		osDisplay = "Linux"
+		osVer = "6.1.0"
+	case "windows":
+		osDisplay = "Windows"
+		osVer = "10.0.22631"
+	default:
+		osDisplay = osName
+		osVer = "1.0.0"
+	}
+	if archName == "amd64" {
+		archName = "x86_64"
+	}
+	return fmt.Sprintf("codex_cli_rs/%s (%s %s; %s) Apple_Terminal/%s",
+		version, osDisplay, osVer, archName, terminalVer)
+}
+
+var codexUserAgent = buildCodexUserAgent()
 
 var dataTag = []byte("data:")
 
