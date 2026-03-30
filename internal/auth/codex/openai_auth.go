@@ -52,8 +52,8 @@ func codexOAuthUserAgent() string {
 
 // OAuth configuration constants for OpenAI Codex
 const (
-	AuthURL     = "https://auth.openai.com/oauth/authorize"
-	TokenURL    = "https://auth.openai.com/oauth/token"
+	AuthURL     = "https://chatgpt.com/oauth/authorize"
+	TokenURL    = "https://chatgpt.com/oauth/token"
 	ClientID    = "app_EMoamEEZ73f0CkXaXp7hrann"
 	RedirectURI = "http://localhost:1455/auth/callback"
 )
