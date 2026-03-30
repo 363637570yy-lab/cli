@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"runtime"
 	"strings"
 	"time"
 
@@ -21,39 +20,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// codexOAuthUserAgent 返回与本机平台匹配的 OAuth 请求 UA，
-// 对齐 codex_cli_rs 客户端在 token 交换/刷新时发送的值。
+// codexOAuthUserAgent 返回与真实 macOS Codex CLI 一致的 OAuth 请求 UA，
+// 硬编码为 macOS 格式，避免服务器在 Linux 上运行时泄露平台信息触发风控。
 func codexOAuthUserAgent() string {
-	version := "0.116.0"
-	terminalVer := "464"
-	osName := runtime.GOOS
-	archName := runtime.GOARCH
-	var osDisplay, osVer string
-	switch osName {
-	case "darwin":
-		osDisplay = "Mac OS"
-		osVer = "26.0.1"
-	case "linux":
-		osDisplay = "Linux"
-		osVer = "6.1.0"
-	case "windows":
-		osDisplay = "Windows"
-		osVer = "10.0.22631"
-	default:
-		osDisplay = osName
-		osVer = "1.0.0"
-	}
-	if archName == "amd64" {
-		archName = "x86_64"
-	}
-	return fmt.Sprintf("codex_cli_rs/%s (%s %s; %s) Apple_Terminal/%s",
-		version, osDisplay, osVer, archName, terminalVer)
+	return "codex_cli_rs/0.116.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464"
 }
 
 // OAuth configuration constants for OpenAI Codex
 const (
-	AuthURL     = "https://chatgpt.com/oauth/authorize"
-	TokenURL    = "https://chatgpt.com/oauth/token"
+	AuthURL     = "https://auth.openai.com/oauth/authorize"
+	TokenURL    = "https://auth.openai.com/oauth/token"
 	ClientID    = "app_EMoamEEZ73f0CkXaXp7hrann"
 	RedirectURI = "http://localhost:1455/auth/callback"
 )

@@ -24,10 +24,10 @@ import (
 const (
 	codexLoginModeMetadataKey             = "codex_login_mode"
 	codexLoginModeDevice                  = "device"
-	codexDeviceUserCodeURL                = "https://chatgpt.com/api/accounts/deviceauth/usercode"
-	codexDeviceTokenURL                   = "https://chatgpt.com/api/accounts/deviceauth/token"
-	codexDeviceVerificationURL            = "https://chatgpt.com/codex/device"
-	codexDeviceTokenExchangeRedirectURI   = "https://chatgpt.com/deviceauth/callback"
+	codexDeviceUserCodeURL                = "https://auth.openai.com/api/accounts/deviceauth/usercode"
+	codexDeviceTokenURL                   = "https://auth.openai.com/api/accounts/deviceauth/token"
+	codexDeviceVerificationURL            = "https://auth.openai.com/codex/device"
+	codexDeviceTokenExchangeRedirectURI   = "https://auth.openai.com/deviceauth/callback"
 	codexDeviceTimeout                    = 15 * time.Minute
 	codexDeviceDefaultPollIntervalSeconds = 5
 )
