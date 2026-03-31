@@ -653,8 +653,13 @@ func applyCodexHeaders(r *http.Request, auth *cliproxyauth.Auth, token string, s
 	misc.EnsureHeader(r.Header, ginHeaders, "Session_id", uuid.NewString())
 	misc.EnsureHeader(r.Header, ginHeaders, "X-Codex-Turn-Metadata", "")
 	misc.EnsureHeader(r.Header, ginHeaders, "X-Client-Request-Id", "")
+	// 强制使用配置或硬编码的 Codex UA，忽略下游传来的任何 User-Agent（防止泄露 curl/claude 标识）
 	cfgUserAgent, _ := codexHeaderDefaults(cfg, auth)
-	ensureHeaderWithConfigPrecedence(r.Header, ginHeaders, "User-Agent", cfgUserAgent, codexUserAgent)
+	if val := strings.TrimSpace(cfgUserAgent); val != "" {
+		r.Header.Set("User-Agent", val)
+	} else {
+		r.Header.Set("User-Agent", codexUserAgent)
+	}
 
 	if stream {
 		r.Header.Set("Accept", "text/event-stream")
@@ -669,9 +674,8 @@ func applyCodexHeaders(r *http.Request, auth *cliproxyauth.Auth, token string, s
 			isAPIKey = true
 		}
 	}
-	if originator := strings.TrimSpace(ginHeaders.Get("Originator")); originator != "" {
-		r.Header.Set("Originator", originator)
-	} else if !isAPIKey {
+	// 强制设定 Originator 为 Codex 定义值，不采纳下游透传的自定义 Originator
+	if !isAPIKey {
 		r.Header.Set("Originator", codexOriginator)
 	}
 	if !isAPIKey {

@@ -833,7 +833,12 @@ func applyCodexWebsocketHeaders(ctx context.Context, headers http.Header, auth *
 	}
 	headers.Set("OpenAI-Beta", betaHeader)
 	misc.EnsureHeader(headers, ginHeaders, "Session_id", uuid.NewString())
-	ensureHeaderWithConfigPrecedence(headers, ginHeaders, "User-Agent", cfgUserAgent, codexUserAgent)
+	// 强制使用配置或硬编码的 Codex UA，忽略下游传来的任何 User-Agent（防止泄露 curl/claude/passthrough 标识）
+	if val := strings.TrimSpace(cfgUserAgent); val != "" {
+		headers.Set("User-Agent", val)
+	} else {
+		headers.Set("User-Agent", codexUserAgent)
+	}
 
 	isAPIKey := false
 	if auth != nil && auth.Attributes != nil {
@@ -841,9 +846,8 @@ func applyCodexWebsocketHeaders(ctx context.Context, headers http.Header, auth *
 			isAPIKey = true
 		}
 	}
-	if originator := strings.TrimSpace(ginHeaders.Get("Originator")); originator != "" {
-		headers.Set("Originator", originator)
-	} else if !isAPIKey {
+	// 强制设定 Originator 为 Codex 定义值，不采纳下游透传的自定义 Originator
+	if !isAPIKey {
 		headers.Set("Originator", codexOriginator)
 	}
 	if !isAPIKey {
